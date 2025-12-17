@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>حاسبة عدد السبوت لايت</title>
+  <style>
+    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; background: #f9f9f9; }
+    h1 { color: #333; }
+    label { display: block; margin: 8px 0 4px; }
+    input, button { padding: 8px; width: 100%; max-width: 300px; margin-bottom: 10px; }
+    button { background: #0078d7; color: #fff; border: none; cursor: pointer; }
+    button:hover { background: #005a9e; }
+    #result { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #0078d7; }
+  </style>
+</head>
+<body>
+  <h1>حاسبة عدد السبوت لايت</h1>
+
+  <label>المساحة (م²)</label>
+  <input id="area" type="number" step="0.1" placeholder="أدخل المساحة">
+
+  <label>لومن لكل سبوت</label>
+  <input id="lumens" type="number" placeholder="أدخل اللومن">
+
+  <label>مستوى الإضاءة المطلوب (لكس)</label>
+  <input id="lux" type="number" value="200">
+
+  <button onclick="calc()">احسب</button>
+
+  <div id="result"></div>
+
+  <script>
+    function calc() {
+      let area = parseFloat(document.getElementById('area').value);
+      let lumens = parseFloat(document.getElementById('lumens').value);
+      let lux = parseFloat(document.getElementById('lux').value);
+
+      if (area > 0 && lumens > 0 && lux > 0) {
+        let needed = area * lux;
+        let spots = Math.ceil(needed / lumens);
+        document.getElementById('result').innerText =
+          "عدد السبوت المقترح: " + spots;
+      } else {
+        document.getElementById('result').innerText =
+          "يرجى إدخال قيم صحيحة.";
+      }
+    }
+  </script>
+</body>
+</html>
