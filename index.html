@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>مخطط توزيع السبوت لايت</title>
   <style>
-    body { font-family: Tahoma, sans-serif; direction: center; margin: 20px; background:#21293b; color: darkorange; }
+    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; background:#21293b; color: darkorange; }
     h1 { text-align: center; }
     label { display: block; margin: 8px 0 4px; }
     input, select { padding: 8px; width: 100%; max-width: 320px; margin-bottom: 10px; border:1px solid darkorange; border-radius:6px; background:#21293b; color: darkorange; }
-    .btn { padding:10px 16px; background:darkorange; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin-right:6px; }
+    .btn { padding:10px 16px; background:darkorange; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin:5px; }
     .btn:hover { background:#ffb84d; }
     #room { margin:20px auto; border:2px solid darkorange; position:relative; background:#fff; }
     .spot { width:18px; height:18px; background:darkorange; border-radius:50%; position:absolute; transform:translate(-50%, -50%); }
@@ -41,8 +41,9 @@
 
   <div>
     <button class="btn" onclick="calc()">احسب ووزّع</button>
-    <button class="btn" onclick="downloadPlan()">تنزيل المخطط</button>
+    <button class="btn" onclick="downloadPlan()">حفظ المخطط كصورة</button>
     <button class="btn" onclick="window.print()">طباعة</button>
+    <button class="btn" onclick="sharePlan()">مشاركة الخطة</button>
   </div>
 
   <div id="result"></div>
@@ -95,23 +96,6 @@
           }
         }
 
-        // خطوط توضيحية للمسافات (من الجدران)
-        let lineLeft = document.createElement('div');
-        lineLeft.className = "line";
-        lineLeft.style.left = (1 * scale) + "px";
-        lineLeft.style.top = "0";
-        lineLeft.style.height = room.clientHeight + "px";
-        lineLeft.style.width = "1px";
-        room.appendChild(lineLeft);
-
-        let lineTop = document.createElement('div');
-        lineTop.className = "line";
-        lineTop.style.top = (1 * scale) + "px";
-        lineTop.style.left = "0";
-        lineTop.style.width = room.clientWidth + "px";
-        lineTop.style.height = "1px";
-        room.appendChild(lineTop);
-
         // كتابة الأبعاد على الجوانب
         let dimWidth = document.createElement('div');
         dimWidth.className = "dimension";
@@ -159,7 +143,7 @@
       }
     }
 
-    // تنزيل المخطط كصورة
+    // حفظ المخطط كصورة
     function downloadPlan() {
       html2canvas(document.getElementById("room")).then(canvas => {
         let link = document.createElement("a");
@@ -168,5 +152,24 @@
         link.click();
       });
     }
+
+    // مشاركة الخطة
+    function sharePlan() {
+      const summary = document.getElementById("summary").innerText;
+      if (navigator.share) {
+        navigator.share({
+          title: "مخطط توزيع السبوت لايت",
+          text: summary,
+          url: window.location.href
+        });
+      } else {
+        alert("تم نسخ رابط الخطة:\n" + window.location.href);
+        navigator.clipboard.writeText(window.location.href);
+      }
+    }
   </script>
 
+  <!-- مكتبة html2canvas لتحويل المخطط لصورة -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
