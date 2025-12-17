@@ -2,49 +2,94 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>حاسبة عدد السبوت لايت</title>
+  <title>مخطط توزيع السبوت لايت</title>
   <style>
-    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; background: #f9f9f9; }
-    h1 { color: #333; }
+    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; }
     label { display: block; margin: 8px 0 4px; }
-    input, button { padding: 8px; width: 100%; max-width: 300px; margin-bottom: 10px; }
-    button { background: #0078d7; color: #fff; border: none; cursor: pointer; }
+    input, select, button { padding: 8px; width: 100%; max-width: 300px; margin-bottom: 10px; }
+    button { background: #0078d7; color: #fff; border: none; cursor: pointer; margin-right: 5px; }
     button:hover { background: #005a9e; }
-    #result { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #0078d7; }
+    #room {
+      margin-top: 20px;
+      border: 2px solid #333;
+      position: relative;
+      background: #f9f9f9;
+    }
+    .spot {
+      width: 20px;
+      height: 20px;
+      background: gold;
+      border-radius: 50%;
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+    #result { margin-top: 20px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>حاسبة عدد السبوت لايت</h1>
+  <h1>حاسبة ومخطط السبوت لايت</h1>
 
-  <label>المساحة (م²)</label>
-  <input id="area" type="number" step="0.1" placeholder="أدخل المساحة">
+  <label>العرض (متر)</label>
+  <input id="width" type="number" step="0.1">
 
-  <label>لومن لكل سبوت</label>
-  <input id="lumens" type="number" placeholder="أدخل اللومن">
+  <label>الطول (متر)</label>
+  <input id="length" type="number" step="0.1">
 
-  <label>مستوى الإضاءة المطلوب (لكس)</label>
-  <input id="lux" type="number" value="200">
+  <label>الارتفاع (متر)</label>
+  <input id="height" type="number" step="0.1">
 
-  <button onclick="calc()">احسب</button>
+  <label>اختر نوع المكان</label>
+  <select id="roomType">
+    <option value="150">غرفة نوم</option>
+    <option value="200">صالة/غرفة معيشة</option>
+    <option value="300">مكتب/مطبخ</option>
+    <option value="500">حمام/منطقة عمل دقيقة</option>
+  </select>
+
+  <button onclick="calc()">احسب ووزع</button>
+  <button onclick="downloadPlan()">تنزيل المخطط</button>
+  <button onclick="window.print()">طباعة</button>
 
   <div id="result"></div>
+  <div id="room"></div>
 
   <script>
     function calc() {
-      let area = parseFloat(document.getElementById('area').value);
-      let lumens = parseFloat(document.getElementById('lumens').value);
-      let lux = parseFloat(document.getElementById('lux').value);
+      let width = parseFloat(document.getElementById('width').value);
+      let length = parseFloat(document.getElementById('length').value);
+      let height = parseFloat(document.getElementById('height').value);
+      let lux = parseFloat(document.getElementById('roomType').value);
 
-      if (area > 0 && lumens > 0 && lux > 0) {
+      // نفترض أن كل سبوت يعطي تقريباً 800 لومن
+      let lumensPerSpot = 800;
+
+      if (width > 0 && length > 0 && height > 0) {
+        let area = width * length;
         let needed = area * lux;
-        let spots = Math.ceil(needed / lumens);
+        let spots = Math.ceil(needed / lumensPerSpot);
+
         document.getElementById('result').innerText =
           "عدد السبوت المقترح: " + spots;
-      } else {
-        document.getElementById('result').innerText =
-          "يرجى إدخال قيم صحيحة.";
-      }
-    }
-  </script>
-</body>
-</html>
+
+        // رسم الغرفة بنسبة أبعادها
+        let scale = 40; // 1 متر = 40 بكسل
+        let room = document.getElementById('room');
+        room.style.width = (width * scale) + "px";
+        room.style.height = (length * scale) + "px";
+        room.innerHTML = "";
+
+        // توزيع السبوتات بشكل شبكة منتظمة
+        let cols = Math.ceil(Math.sqrt(spots * (width / length)));
+        let rows = Math.ceil(spots / cols);
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let index = r * cols + c;
+            if (index < spots) {
+              let x = (c + 0.5) * (room.clientWidth / cols);
+              let y = (r + 0.5) * (room.clientHeight / rows);
+              let div = document.createElement('div');
+              div.className = "spot";
+              div.style.left = x + "px";
+              div.style.top = y + "px";
+             
