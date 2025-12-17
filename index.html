@@ -10,13 +10,20 @@
     input, select { padding: 8px; width: 100%; max-width: 320px; margin-bottom: 10px; border:1px solid orange; border-radius:6px; background:#21293b; color: orange; }
     .btn { padding:10px 16px; background:orange; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin:5px; }
     .btn:hover { background:#ffb84d; }
-    #room { margin:20px auto; border:2px solid orange; position:relative; background:#fff; }
-    .spot { width:18px; height:18px; background:orange; border-radius:50%; position:absolute; transform:translate(-50%, -50%); }
-    .dimension { position:absolute; font-size:14px; color:white; font-weight:bold; }
-    .arrow { position:absolute; background:black; }
-    .arrow::after { content:""; position:absolute; border:6px solid transparent; }
-    .arrow.vertical::after { border-top-color:black; top:100%; left:-5px; }
-    .arrow.horizontal::after { border-left-color:black; left:100%; top:-5px; }
+    #roomWrapper { background:#fff; padding:12px; border-radius:8px; }
+    #room { margin:10px auto; border:2px solid #000; position:relative; background:#fff; }
+    .spot { width:16px; height:16px; background:orange; border:2px solid #000; border-radius:50%; position:absolute; transform:translate(-50%, -50%); }
+    .dimension { position:absolute; font-size:14px; color:#000; font-weight:bold; }
+    /* أسهم سوداء */
+    .arrow { position:absolute; }
+    .arrow-line { position:absolute; background:#000; }
+    .arrow-head { width:0; height:0; position:absolute; border:8px solid transparent; }
+    /* رؤوس الأسهم حسب الاتجاه */
+    .head-right { border-left-color:#000; }
+    .head-left  { border-right-color:#000; }
+    .head-down  { border-top-color:#000; }
+    .head-up    { border-bottom-color:#000; }
+
     #result { margin-top: 16px; background:#1a2233; padding:12px; border-radius:6px; }
     #summary { margin-top: 16px; background:#1a2233; padding:12px; border-radius:6px; font-weight:bold; line-height:1.8; }
     #summary h3 { margin:8px 0; color:#ffb84d; }
@@ -28,20 +35,20 @@
   <h1>حاسبة ومخطط السبوت لايت</h1>
 
   <label>العرض (متر)</label>
-  <input id="width" type="number" step="0.1">
+  <input id="width" type="number" step="0.1" placeholder="مثال: 6">
 
   <label>الطول (متر)</label>
-  <input id="length" type="number" step="0.1">
+  <input id="length" type="number" step="0.1" placeholder="مثال: 8">
 
   <label>الارتفاع (متر)</label>
-  <input id="height" type="number" step="0.1">
+  <input id="height" type="number" step="0.1" placeholder="مثال: 3">
 
   <label>اختر نوع المكان</label>
   <select id="roomType">
-    <option value="150">غرفة نوم</option>
-    <option value="200">صالة/غرفة معيشة</option>
-    <option value="300">مكتب/مطبخ</option>
-    <option value="500">حمام/منطقة عمل دقيقة</option>
+    <option value="150">غرفة نوم (150 لوكس)</option>
+    <option value="200">صالة/غرفة معيشة (200 لوكس)</option>
+    <option value="300">مكتب/مطبخ (300 لوكس)</option>
+    <option value="500">حمام/منطقة عمل دقيقة (500 لوكس)</option>
   </select>
 
   <div>
@@ -53,109 +60,220 @@
   </div>
 
   <div id="result"></div>
-  <div id="room"></div>
+
+  <div id="roomWrapper">
+    <div id="room"></div>
+  </div>
+
   <div id="summary"></div>
 
   <script>
     function calc() {
-      let width = parseFloat(document.getElementById('width').value);
-      let length = parseFloat(document.getElementById('length').value);
-      let height = parseFloat(document.getElementById('height').value);
-      let lux = parseFloat(document.getElementById('roomType').value);
+      const width = parseFloat(document.getElementById('width').value);
+      const length = parseFloat(document.getElementById('length').value);
+      const height = parseFloat(document.getElementById('height').value);
+      const lux = parseFloat(document.getElementById('roomType').value);
+      const lumensPerSpot = 800;
 
-      let lumensPerSpot = 800; // نفترض أن كل سبوت يعطي 800 لومن
+      if (!(width > 0 && length > 0 && height > 0)) {
+        document.getElementById('result').innerText = "يرجى إدخال قيم صحيحة.";
+        return;
+      }
 
-      if (width > 0 && length > 0 && height > 0) {
-        let area = width * length;
-        let needed = area * lux;
-        let spots = Math.ceil(needed / lumensPerSpot);
+      const area = width * length;
+      const needed = area * lux;
+      const spots = Math.max(1, Math.ceil(needed / lumensPerSpot));
 
-        document.getElementById('result').innerText =
-          "عدد السبوت المقترح: " + spots;
+      document.getElementById('result').innerText = "عدد السبوت المقترح: " + spots;
 
-        // رسم الغرفة بنسبة أبعادها
-        let scale = 40; // 1 متر = 40 بكسل
-        let room = document.getElementById('room');
-        room.style.width = (width * scale) + "px";
-        room.style.height = (length * scale) + "px";
-        room.innerHTML = "";
+      // إعداد الرسم
+      const scale = 40; // 1 م = 40 بكسل
+      const room = document.getElementById('room');
+      room.style.width = (width * scale) + "px";
+      room.style.height = (length * scale) + "px";
+      room.innerHTML = "";
 
-        // توزيع السبوتات بشكل شبكة منتظمة
-        let cols = Math.ceil(Math.sqrt(spots * (width / length)));
-        let rows = Math.ceil(spots / cols);
+      // حساب الشبكة
+      let cols = Math.ceil(Math.sqrt(spots * (width / length)));
+      let rows = Math.ceil(spots / cols);
+      // ضبط لملء الشبكة بعدد النقاط
+      while (cols * rows < spots) {
+        if (width / cols > length / rows) cols++; else rows++;
+      }
 
-        let spacingX = (width / cols).toFixed(2);
-        let spacingY = (length / rows).toFixed(2);
+      const spacingX = width / cols;
+      const spacingY = length / rows;
 
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            let index = r * cols + c;
-            if (index < spots) {
-              let x = (c + 0.5) * (room.clientWidth / cols);
-              let y = (r + 0.5) * (room.clientHeight / rows);
-              let div = document.createElement('div');
-              div.className = "spot";
-              div.style.left = x + "px";
-              div.style.top = y + "px";
-              room.appendChild(div);
-            }
+      // رسم المصابيح
+      const lampPositions = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const index = r * cols + c;
+          if (index < spots) {
+            const x = (c + 0.5) * (room.clientWidth / cols);
+            const y = (r + 0.5) * (room.clientHeight / rows);
+            const div = document.createElement('div');
+            div.className = "spot";
+            div.style.left = x + "px";
+            div.style.top = y + "px";
+            room.appendChild(div);
+            lampPositions.push({ x, y });
           }
         }
-
-        // أسهم سوداء من الجدران
-        let arrowLeft = document.createElement('div');
-        arrowLeft.className = "arrow horizontal";
-        arrowLeft.style.height = "2px";
-        arrowLeft.style.width = (room.clientWidth/cols/2) + "px";
-        arrowLeft.style.top = (room.clientHeight/2) + "px";
-        arrowLeft.style.left = "0px";
-        room.appendChild(arrowLeft);
-
-        let arrowTop = document.createElement('div');
-        arrowTop.className = "arrow vertical";
-        arrowTop.style.width = "2px";
-        arrowTop.style.height = (room.clientHeight/rows/2) + "px";
-        arrowTop.style.left = (room.clientWidth/2) + "px";
-        arrowTop.style.top = "0px";
-        room.appendChild(arrowTop);
-
-        // كتابة الأبعاد على الجوانب
-        let dimWidth = document.createElement('div');
-        dimWidth.className = "dimension";
-        dimWidth.style.top = (room.clientHeight + 5) + "px";
-        dimWidth.style.left = (room.clientWidth/2 - 20) + "px";
-        dimWidth.innerText = width + " م";
-        room.appendChild(dimWidth);
-
-        let dimLength = document.createElement('div');
-        dimLength.className = "dimension";
-        dimLength.style.left = (room.clientWidth + 5) + "px";
-        dimLength.style.top = (room.clientHeight/2 - 10) + "px";
-        dimLength.innerText = length + " م";
-        room.appendChild(dimLength);
-
-        // ملخص الخطة مرتب ومقسم
-        document.getElementById('summary').innerHTML =
-          "<h3>📐 أبعاد الغرفة</h3><ul>" +
-          "<li>المساحة: " + area.toFixed(2) + " م²</li>" +
-          "<li>الأبعاد: " + width + " م × " + length + " م</li></ul>" +
-
-          "<h3>💡 الإضاءة</h3><ul>" +
-          "<li>عدد النقاط: " + spots + " سبوت</li>" +
-          "<li>المساحة النقطية: " + (area/spots).toFixed(2) + " م² لكل سبوت</li></ul>" +
-
-          "<h3>📏 تفاصيل المسافات</h3><ul>" +
-          "<li>من الجدران: 1 × 1 متر (موضحة بالأسهم السوداء)</li>" +
-          "<li>بين المصابيح: " + spacingX + " × " + spacingY + " متر (تقريبًا)</li>" +
-          "<li>نمط التوزيع: شبكة منتظمة</li></ul>";
-      } else {
-        document.getElementById('result').innerText =
-          "يرجى إدخال قيم صحيحة.";
-        document.getElementById('summary').innerText = "";
       }
+
+      // كتابة الأبعاد على الجوانب
+      const dimWidth = document.createElement('div');
+      dimWidth.className = "dimension";
+      dimWidth.style.top = (room.clientHeight + 6) + "px";
+      dimWidth.style.left = (room.clientWidth/2 - 20) + "px";
+      dimWidth.innerText = width + " م";
+      room.appendChild(dimWidth);
+
+      const dimLength = document.createElement('div');
+      dimLength.className = "dimension";
+      dimLength.style.left = (room.clientWidth + 6) + "px";
+      dimLength.style.top = (room.clientHeight/2 - 10) + "px";
+      dimLength.innerText = length + " م";
+      room.appendChild(dimLength);
+
+      // أسهم سوداء: من الجدران إلى أقرب مصابيح (يسار وعلوي)
+      // أقرب مصباح لليسار: أصغر X
+      const leftMost = lampPositions.reduce((a,b) => a.x < b.x ? a : b);
+      const topMost  = lampPositions.reduce((a,b) => a.y < b.y ? a : b);
+
+      drawArrowHorizontal(room, 0, leftMost.y, leftMost.x, "right"); // من الجدار الأيسر إلى المصباح
+      drawArrowVertical(room, leftMost.x, 0, leftMost.y, "down");    // من الجدار العلوي إلى المصباح الأعلى
+
+      // أسهم بين الأعمدة وسطياً (من مركز عمود إلى العمود المجاور)
+      if (cols > 1) {
+        const x1 = room.clientWidth / cols * 0.5;
+        const x2 = room.clientWidth / cols * 1.5;
+        const yMid = room.clientHeight / 2;
+        drawArrowHorizontal(room, x1, yMid, x2 - x1, "right");
+      }
+      // أسهم بين الصفوف وسطياً
+      if (rows > 1) {
+        const y1 = room.clientHeight / rows * 0.5;
+        const y2 = room.clientHeight / rows * 1.5;
+        const xMid = room.clientWidth / 2;
+        drawArrowVertical(room, xMid, y1, y2 - y1, "down");
+      }
+
+      // ملخص مرتب ومقسم
+      document.getElementById('summary').innerHTML =
+        "<h3>📐 أبعاد الغرفة</h3><ul>" +
+        "<li>المساحة: " + area.toFixed(2) + " م²</li>" +
+        "<li>الأبعاد: " + width + " م × " + length + " م</li></ul>" +
+
+        "<h3>💡 الإضاءة</h3><ul>" +
+        "<li>عدد النقاط: " + spots + " سبوت</li>" +
+        "<li>المساحة النقطية: " + (area/spots).toFixed(2) + " م² لكل سبوت</li>" +
+        "<li>نمط التوزيع: " + cols + " أعمدة × " + rows + " صفوف</li></ul>" +
+
+        "<h3>📏 تفاصيل المسافات</h3><ul>" +
+        "<li>من الجدران (تقريبًا): " + (spacingX/2).toFixed(2) + " م إلى أول عمود، " + (spacingY/2).toFixed(2) + " م إلى أول صف</li>" +
+        "<li>بين الأعمدة: " + spacingX.toFixed(2) + " م — بين الصفوف: " + spacingY.toFixed(2) + " م</li></ul>";
+    }
+
+    // يرسم سهم أفقي: يبدأ عند (startX, startY) بطول lengthPx باتجاه dir ("right" أو "left")
+    function drawArrowHorizontal(parent, startX, startY, lengthPx, dir="right") {
+      const arrow = document.createElement('div');
+      arrow.className = "arrow";
+      arrow.style.left = startX + "px";
+      arrow.style.top  = startY + "px";
+
+      const line = document.createElement('div');
+      line.className = "arrow-line";
+      line.style.left = "0px";
+      line.style.top  = "-1px";
+      line.style.width = lengthPx + "px";
+      line.style.height = "2px";
+      arrow.appendChild(line);
+
+      const head = document.createElement('div');
+      head.className = "arrow-head " + (dir === "right" ? "head-right" : "head-left");
+      if (dir === "right") {
+        head.style.left = lengthPx + "px";
+        head.style.top  = "-6px";
+      } else { // left
+        head.style.left = "-8px";
+        head.style.top  = "-6px";
+      }
+      arrow.appendChild(head);
+
+      parent.appendChild(arrow);
+    }
+
+    // يرسم سهم عمودي: يبدأ عند (startX, startY) بطول lengthPx باتجاه dir ("down" أو "up")
+    function drawArrowVertical(parent, startX, startY, lengthPx, dir="down") {
+      const arrow = document.createElement('div');
+      arrow.className = "arrow";
+      arrow.style.left = startX + "px";
+      arrow.style.top  = startY + "px";
+
+      const line = document.createElement('div');
+      line.className = "arrow-line";
+      line.style.left = "-1px";
+      line.style.top  = "0px";
+      line.style.width = "2px";
+      line.style.height = lengthPx + "px";
+      arrow.appendChild(line);
+
+      const head = document.createElement('div');
+      head.className = "arrow-head " + (dir === "down" ? "head-down" : "head-up");
+      if (dir === "down") {
+        head.style.left = "-8px";
+        head.style.top  = lengthPx + "px";
+      } else { // up
+        head.style.left = "-8px";
+        head.style.top  = "-8px";
+      }
+      arrow.appendChild(head);
+
+      parent.appendChild(arrow);
     }
 
     // حفظ المخطط كصورة
     function downloadPlan() {
-      html2canvas(document.getElementById("room")).then(canvas => {
-        let link
+      html2canvas(document.getElementById("roomWrapper")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "spotlight-plan.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    // مشاركة الخطة
+    function sharePlan() {
+      const summary = document.getElementById("summary").innerText;
+      if (navigator.share) {
+        navigator.share({
+          title: "مخطط توزيع السبوت لايت",
+          text: summary,
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("تم نسخ رابط الخطة:\n" + window.location.href);
+      }
+    }
+
+    // مسح وإعادة البدء
+    function resetPlan() {
+      document.getElementById('width').value = "";
+      document.getElementById('length').value = "";
+      document.getElementById('height').value = "";
+      document.getElementById('roomType').selectedIndex = 0;
+      document.getElementById('result').innerText = "";
+      document.getElementById('room').innerHTML = "";
+      document.getElementById('room').style.width = "0px";
+      document.getElementById('room').style.height = "0px";
+      document.getElementById('summary').innerHTML = "";
+    }
+  </script>
+
+  <!-- مكتبة html2canvas لتحويل المخطط لصورة -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
