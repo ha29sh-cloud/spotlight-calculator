@@ -92,4 +92,28 @@
               div.className = "spot";
               div.style.left = x + "px";
               div.style.top = y + "px";
-             
+              room.appendChild(div);
+            }
+          }
+        }
+      } else {
+        document.getElementById('result').innerText =
+          "يرجى إدخال قيم صحيحة.";
+      }
+    }
+
+    // تنزيل المخطط كصورة
+    function downloadPlan() {
+      html2canvas(document.getElementById("room")).then(canvas => {
+        let link = document.createElement("a");
+        link.download = "spotlight-plan.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  </script>
+
+  <!-- مكتبة html2canvas لتحويل المخطط لصورة -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
