@@ -10,6 +10,16 @@
       --bg-dark: #21293b;
       --bg-section: #1a2233;
     }
+ .watermark-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      opacity: 0.15; /* شفافية */
+      width: 200px;
+      pointer-events: none;
+      z-index: 999;
+    }
     body {
       font-family: Tahoma, sans-serif;
       direction: rtl;
@@ -100,6 +110,13 @@
       gap:20px;
       text-align:right;
     }
+@media (max-width:600px) {
+  #room {
+    transform: scale(0.8); /* تصغير المخطط */
+    transform-origin: top left;
+  }
+}
+
     #summary div { border-radius:8px; padding:10px; }
     #summary div:nth-child(1) { background:#2a2f45; }
     #summary div:nth-child(2) { background:#33384d; }
@@ -146,7 +163,6 @@
     <div id="roomWrapper"><div id="room"></div></div>
     <div id="summary"></div>
   </div>
-
   <div class="after-summary">
     <button class="btn" onclick="downloadPlan()">حفظ المخطط مع الملخص كصورة</button>
     <button class="btn" onclick="sharePlan()">مشاركة الخطة</button>
