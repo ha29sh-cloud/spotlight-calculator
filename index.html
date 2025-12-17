@@ -4,19 +4,24 @@
   <meta charset="UTF-8">
   <title>مخطط توزيع السبوت لايت</title>
   <style>
-    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; background:#21293b; color: darkorange; }
+    body { font-family: Tahoma, sans-serif; direction: rtl; margin: 20px; background:#21293b; color: orange; }
     h1 { text-align: center; }
     label { display: block; margin: 8px 0 4px; }
-    input, select { padding: 8px; width: 100%; max-width: 320px; margin-bottom: 10px; border:1px solid darkorange; border-radius:6px; background:#21293b; color: darkorange; }
-    .btn { padding:10px 16px; background:darkorange; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin:5px; }
+    input, select { padding: 8px; width: 100%; max-width: 320px; margin-bottom: 10px; border:1px solid orange; border-radius:6px; background:#21293b; color: orange; }
+    .btn { padding:10px 16px; background:orange; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-weight:bold; margin:5px; }
     .btn:hover { background:#ffb84d; }
-    #room { margin:20px auto; border:2px solid darkorange; position:relative; background:#fff; }
-    .spot { width:18px; height:18px; background:darkorange; border-radius:50%; position:absolute; transform:translate(-50%, -50%); }
-    .line { position:absolute; background:#ccc; }
-    .dimension { position:absolute; font-size:14px; color: white; font-weight:bold; }
-    .distance { position:absolute; font-size:12px; color: darkorange; background:orange; padding:2px 4px; border-radius:4px; }
+    #room { margin:20px auto; border:2px solid orange; position:relative; background:#fff; }
+    .spot { width:18px; height:18px; background:orange; border-radius:50%; position:absolute; transform:translate(-50%, -50%); }
+    .dimension { position:absolute; font-size:14px; color:white; font-weight:bold; }
+    .arrow { position:absolute; background:black; }
+    .arrow::after { content:""; position:absolute; border:6px solid transparent; }
+    .arrow.vertical::after { border-top-color:black; top:100%; left:-5px; }
+    .arrow.horizontal::after { border-left-color:black; left:100%; top:-5px; }
     #result { margin-top: 16px; background:#1a2233; padding:12px; border-radius:6px; }
     #summary { margin-top: 16px; background:#1a2233; padding:12px; border-radius:6px; font-weight:bold; line-height:1.8; }
+    #summary h3 { margin:8px 0; color:#ffb84d; }
+    #summary ul { margin:0; padding:0 20px; }
+    #summary li { margin-bottom:6px; }
   </style>
 </head>
 <body>
@@ -44,6 +49,7 @@
     <button class="btn" onclick="downloadPlan()">حفظ المخطط كصورة</button>
     <button class="btn" onclick="window.print()">طباعة</button>
     <button class="btn" onclick="sharePlan()">مشاركة الخطة</button>
+    <button class="btn" onclick="resetPlan()">مسح وإعادة البدء</button>
   </div>
 
   <div id="result"></div>
@@ -96,6 +102,23 @@
           }
         }
 
+        // أسهم سوداء من الجدران
+        let arrowLeft = document.createElement('div');
+        arrowLeft.className = "arrow horizontal";
+        arrowLeft.style.height = "2px";
+        arrowLeft.style.width = (room.clientWidth/cols/2) + "px";
+        arrowLeft.style.top = (room.clientHeight/2) + "px";
+        arrowLeft.style.left = "0px";
+        room.appendChild(arrowLeft);
+
+        let arrowTop = document.createElement('div');
+        arrowTop.className = "arrow vertical";
+        arrowTop.style.width = "2px";
+        arrowTop.style.height = (room.clientHeight/rows/2) + "px";
+        arrowTop.style.left = (room.clientWidth/2) + "px";
+        arrowTop.style.top = "0px";
+        room.appendChild(arrowTop);
+
         // كتابة الأبعاد على الجوانب
         let dimWidth = document.createElement('div');
         dimWidth.className = "dimension";
@@ -111,31 +134,20 @@
         dimLength.innerText = length + " م";
         room.appendChild(dimLength);
 
-        // كتابة المسافات بين المصابيح
-        let distX = document.createElement('div');
-        distX.className = "distance";
-        distX.style.top = (room.clientHeight/2 - 10) + "px";
-        distX.style.left = (room.clientWidth/2 - 30) + "px";
-        distX.innerText = "≈ " + spacingX + " م بين الأعمدة";
-        room.appendChild(distX);
-
-        let distY = document.createElement('div');
-        distY.className = "distance";
-        distY.style.top = (room.clientHeight/2 + 20) + "px";
-        distY.style.left = (room.clientWidth/2 - 30) + "px";
-        distY.innerText = "≈ " + spacingY + " م بين الصفوف";
-        room.appendChild(distY);
-
-        // ملخص الخطة بالأسفل
+        // ملخص الخطة مرتب ومقسم
         document.getElementById('summary').innerHTML =
-          "📌 ملخص الخطة:<br>" +
-          "- أبعاد الغرفة: " + area.toFixed(2) + " م²<br>" +
-          "- نقاط الإضاءة: " + spots + " سبوت<br>" +
-          "- المساحة النقطية: " + (area/spots).toFixed(2) + " م² لكل سبوت<br>" +
-          "- تفاصيل المسافات:<br>" +
-          "من الجدران: 1 × 1 متر<br>" +
-          "بين المصابيح: " + spacingX + " × " + spacingY + " متر (تقريبًا)<br>" +
-          "نمط التوزيع: شبكة منتظمة";
+          "<h3>📐 أبعاد الغرفة</h3><ul>" +
+          "<li>المساحة: " + area.toFixed(2) + " م²</li>" +
+          "<li>الأبعاد: " + width + " م × " + length + " م</li></ul>" +
+
+          "<h3>💡 الإضاءة</h3><ul>" +
+          "<li>عدد النقاط: " + spots + " سبوت</li>" +
+          "<li>المساحة النقطية: " + (area/spots).toFixed(2) + " م² لكل سبوت</li></ul>" +
+
+          "<h3>📏 تفاصيل المسافات</h3><ul>" +
+          "<li>من الجدران: 1 × 1 متر (موضحة بالأسهم السوداء)</li>" +
+          "<li>بين المصابيح: " + spacingX + " × " + spacingY + " متر (تقريبًا)</li>" +
+          "<li>نمط التوزيع: شبكة منتظمة</li></ul>";
       } else {
         document.getElementById('result').innerText =
           "يرجى إدخال قيم صحيحة.";
@@ -146,32 +158,4 @@
     // حفظ المخطط كصورة
     function downloadPlan() {
       html2canvas(document.getElementById("room")).then(canvas => {
-        let link = document.createElement("a");
-        link.download = "spotlight-plan.png";
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    }
-
-    // مشاركة الخطة
-    function sharePlan() {
-      const summary = document.getElementById("summary").innerText;
-      if (navigator.share) {
-        navigator.share({
-          title: "مخطط توزيع السبوت لايت",
-          text: summary,
-          url: window.location.href
-        });
-      } else {
-        alert("تم نسخ رابط الخطة:\n" + window.location.href);
-        navigator.clipboard.writeText(window.location.href);
-      }
-    }
-  </script>
-
-  <!-- مكتبة html2canvas لتحويل المخطط لصورة -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-</body>
-</html>
-
-
+        let link
