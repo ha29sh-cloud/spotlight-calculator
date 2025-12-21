@@ -9,7 +9,7 @@
     .container { max-width: 1200px; margin:auto; display:flex; gap:20px; flex-wrap:wrap; }
     .box { background:#fff; padding:20px; border-radius:10px; flex:1 1 340px; box-shadow:0 0 10px rgba(0,0,0,0.05); }
     h1 { margin-top:0; margin-bottom:20px; text-align: center; color:#FF8C00; }
-    h2 { margin-top:0; }
+    h2 { margin-top:0; color:#21293b;}
     label { font-size:14px; }
     input, select { width:100%; padding:8px; margin:5px 0 12px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
     button { padding:10px 14px; background:#FF8C00; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
@@ -114,6 +114,10 @@
     <!-- الصندوق الثاني -->
     <div class="box">
         <h2>مخطط الغرفة</h2>
+	<label class="no-print" style="display:block; margin-bottom:10px;">
+        <input type="checkbox" id="toggleBeam" checked onchange="drawPlan(lastLength, lastWidth, lastSpots, document.getElementById('spotShape').value)">
+        إظهار تغطية زاوية الإشعاع
+        </label>
         <canvas id="planCanvas" width="500" height="400"></canvas>
         <div class="note">الدوائر تمثل أماكن السبوتات</div>
         <div id="coords" class="coords" style="display:none;"></div>
@@ -439,14 +443,38 @@ function drawPlan(length, width, spots, shape) {
     ctx.lineWidth = 2;
     ctx.strokeRect(offsetX, offsetY, roomW, roomH);
 
-    // سهم الشمال
     drawNorthArrow(ctx, canvas.width - 70, offsetY + 20);
+
+    // هل المستخدم يريد إظهار زاوية الإشعاع؟
+    let showBeam = document.getElementById("toggleBeam")?.checked;
+
+    // حساب قطر التغطية
+    let height = parseFloat(document.getElementById("height").value);
+    let beamAngle = parseFloat(document.getElementById("beamAngle").value);
+
+    let beamRadiusPx = null;
+
+    if (showBeam && height && beamAngle) {
+        let rad = beamAngle * Math.PI / 180;
+        let radius = height * Math.tan(rad / 2); // بالمتر
+        beamRadiusPx = radius * scale; // تحويل إلى بكسل
+    }
 
     // رسم السبوتات
     spots.forEach(s => {
         let px = offsetX + s.x * scale;
         let py = offsetY + s.y * scale;
 
+        // دائرة التغطية
+        if (beamRadiusPx) {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255,165,0,0.5)";
+            ctx.lineWidth = 1.2;
+            ctx.arc(px, py, beamRadiusPx, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // توهج
         let glow = ctx.createRadialGradient(px, py, 2, px, py, 18);
         glow.addColorStop(0, "rgba(0,120,255,0.5)");
         glow.addColorStop(1, "rgba(0,120,255,0)");
