@@ -1,386 +1,513 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>مخطط توزيع السبوت لايت</title>
-  <style>
-    :root {
-      --lamp-color: #ff8c00;
-      --lamp-border: #000;
-      --bg-dark: #21293b;
-      --bg-section: #1a2233;
+<meta charset="UTF-8">
+<title>حاسبة السبوت لايت</title>
+
+<style>
+    body { font-family: Tahoma, sans-serif; background:#21293b; padding:20px; }
+    .container { max-width: 1200px; margin:auto; display:flex; gap:20px; flex-wrap:wrap; }
+    .box { background:#fff; padding:20px; border-radius:10px; flex:1 1 340px; box-shadow:0 0 10px rgba(0,0,0,0.05); }
+    h1 { margin-top:0; margin-bottom:20px; }
+    h2 { margin-top:0; }
+    label { font-size:14px; }
+    input, select { width:100%; padding:8px; margin:5px 0 12px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+    button { padding:10px 14px; background:#FF8C00; color:#21293b; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+    button:hover { background:#005fcc; }
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .btn-row button { flex:1 1 120px; }
+    .result { margin-top:15px; padding:10px; background:#e9f4ff; border-radius:8px; font-size:14px; line-height:1.7; }
+    canvas { background:#fff; border:1px solid #ccc; border-radius:8px; }
+    .note { font-size:12px; color:#666; margin-top:8px; }
+    .coords { font-size:13px; margin-top:10px; max-height:200px; overflow:auto; direction:ltr; text-align:left; background:#fafafa; padding:8px; border-radius:6px; border:1px solid #eee; }
+    .warning { color:#c0392b; font-weight:bold; margin-top:8px; font-size:13px; }
+    @media print {
+        body { background:#fff; }
+        .no-print { display:none !important; }
+        .container { max-width:100%; }
     }
- .watermark-img {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-30deg);
-      opacity: 0.15; /* شفافية */
-      width: 200px;
-      pointer-events: none;
-      z-index: 999;
-    }
-    body {
-      font-family: Tahoma, sans-serif;
-      direction: rtl;
-      margin: 20px;
-      background: var(--bg-dark);
-      color: #ff8c00;
-      text-align:center;
-      font-size: 16px;
-      line-height: 1.6;
-    }
-    h1 { font-size: 22px; }
-    .form-section {
-      display:inline-block;
-      text-align:right;
-      background: var(--bg-section);
-      padding:20px;
-      border-radius:10px;
-      max-width: 95%;
-    }
-    label { display:block; margin:8px 0 4px; font-size:16px; }
-    input, select {
-      padding:12px;
-      width:100%;
-      margin-bottom:12px;
-      border:1px solid #ff8c00;
-      border-radius:6px;
-      background: var(--bg-dark);
-      color: #ff8c00;
-      font-size:16px;
-      min-height:44px;
-    }
-    .btn {
-      padding:12px 20px;
-      background:#ff8c00;
-      color: var(--bg-dark);
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-      margin:6px;
-      font-size:16px;
-      min-width:120px;
-    }
-    .btn:hover { background:#ffa733; }
-    #planWrapper { background:#fff; padding:15px; border-radius:8px; display:inline-block; margin-top:20px; }
-    #room { margin:30px auto; border:2px solid #000; position:relative; background:#fff; }
-    .spot {
-      width:16px; height:16px;
-      background: var(--lamp-color);
-      border:2px solid var(--lamp-border);
-      border-radius:50%;
-      position:absolute;
-      transform:translate(-50%, -50%);
-    }
-    .dimension { position:absolute; font-size:14px; color:#000; font-weight:bold; }
-    .arrow-line { position:absolute; background:#000; }
-    .arrow-head { width:0; height:0; position:absolute; border:8px solid transparent; }
-    .head-right { border-left-color:#000; }
-    .head-down  { border-top-color:#000; }
-    .arrow-label {
-      position:absolute;
-      background:#000;
-      color:#fff;
-      padding:2px 6px;
-      border-radius:4px;
-      font-size:12px;
-      transform:translate(-50%, -50%);
-      white-space:nowrap;
-    }
-    #result {
-      margin-top:16px;
-      background: var(--bg-section);
-      padding:12px;
-      border-radius:6px;
-      color:#fff;
-      font-size:18px;
-      font-weight:bold;
-    }
-    #summary {
-      margin-top:16px;
-      background: var(--bg-section);
-      padding:20px;
-      border-radius:6px;
-      font-weight:bold;
-      line-height:1.8;
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap:20px;
-      text-align:right;
-    }
-@media (max-width:600px) {
-  #room {
-    transform: scale(0.8); /* تصغير المخطط */
-    transform-origin: top left;
-  }
+</style>
+</head>
+
+<body>
+<div style="text-align:center; margin-bottom:20px;">
+    <img src="https://raw.githubusercontent.com/ha29sh-cloud/spotlight-calculator/main/logo.png"
+         alt="Logo"
+         style="width:150px;">
+</div>
+<h1>حساب وتوزيع السبوت لايت </h1>
+
+<div class="container">
+
+    <!-- الصندوق الأول -->
+    <div class="box">
+        <h2>بيانات الغرفة والإضاءة</h2>
+
+        <label>طول الغرفة بالـ(متر)</label>
+        <input type="number" id="length" step="0.1">
+
+        <label>عرض الغرفة بالـ(متر)</label>
+        <input type="number" id="width" step="0.1">
+
+        <label>ارتفاع السقف "اختياري"</label>
+        <input type="number" id="height" step="0.1">
+
+        <label>نوع الغرفة</label>
+        <select id="roomType" onchange="suggestLumen()">
+            <option value="200">صالة (200 لوكس)</option>
+            <option value="120">غرفة نوم (120 لوكس)</option>
+            <option value="350">مطبخ (350 لوكس)</option>
+            <option value="150">ممرات (150 لوكس)</option>
+            <option value="250">حمّام (250 لوكس)</option>
+        </select>
+
+        <label>لومن الكشاف الواحد</label>
+        <input type="number" id="spotLumen" oninput="checkLumen()">
+
+        <div id="suggestBox" style="font-size:13px; color:#0078ff; margin-top:-8px; margin-bottom:10px;"></div>
+        <button class="no-print" onclick="applySuggestedLumen()">استخدم اللومن المقترح</button>
+
+        <label>زاوية شعاع الكشاف "اختياري"</label>
+        <input type="number" id="beamAngle">
+
+        <label>مسافة من الجدار لأول سبوت بالـ(متر)</label>
+        <input type="number" id="margin" value="0.5" step="0.1">
+
+        <label>نوع التوزيع</label>
+        <select id="distributionType">
+            <option value="grid">توزيع شبكي</option>
+            <option value="linearLength">خط طولي</option>
+            <option value="linearWidth">خط عرضي</option>
+            <option value="perimeter">محيطي</option>
+            <option value="Ushape">شكل U</option>
+        </select>
+
+        <label>شكل السبوت</label>
+        <select id="spotShape">
+            <option value="circle">دائري</option>
+            <option value="square">مربع</option>
+        </select>
+
+        <button class="no-print" onclick="calculate()">احسب ووزّع</button>
+
+        <div id="output" class="result" style="display:none;"></div>
+        <div id="warning" class="warning" style="display:none;"></div>
+
+        <div class="btn-row no-print">
+            <button onclick="printPage()">طباعة</button>
+            <button onclick="downloadCoords()">تحميل الإحداثيات</button>
+        </div>
+    </div>
+
+    <!-- الصندوق الثاني -->
+    <div class="box">
+        <h2>مخطط الغرفة</h2>
+        <canvas id="planCanvas" width="500" height="400"></canvas>
+        <div class="note">الدوائر تمثل أماكن السبوتات</div>
+        <div id="coords" class="coords" style="display:none;"></div>
+    </div>
+
+</div>
+
+<script>
+let lastSpots = [];
+let lastLength = 0;
+let lastWidth = 0;
+window.onload = function () {
+    suggestLumen(); // يضبط اللومن المقترح حسب النوع الافتراضي (صالة)
+};
+
+/* ---------------------------
+   1) اقتراح لومن حسب نوع الغرفة
+----------------------------*/
+function suggestLumen() {
+    let type = document.getElementById("roomType").value;
+    let suggestBox = document.getElementById("suggestBox");
+
+    let suggested = 500; // default
+
+    if (type == 200) suggested = 850;      // صالة
+    if (type == 120) suggested = 550;      // نوم
+    if (type == 350) suggested = 1100;     // مطبخ
+    if (type == 150) suggested = 400;      // ممرات
+    if (type == 250) suggested = 550;      // حمّام
+
+    suggestBox.innerHTML = "اللومن المقترح: " + suggested + " لومن";
+    suggestBox.dataset.value = suggested;
 }
 
-    #summary div { border-radius:8px; padding:10px; }
-    #summary div:nth-child(1) { background:#2a2f45; }
-    #summary div:nth-child(2) { background:#33384d; }
-    #summary div:nth-child(3) { background:#3a4055; }
-    #summary h3 {
-      margin:8px 0;
-      color:#ff8c00;
-      text-align:center;
-      font-size:18px;
+function applySuggestedLumen() {
+    let suggestBox = document.getElementById("suggestBox");
+    let v = suggestBox.dataset.value;
+
+    // لو ما فيه قيمة محفوظة، نحسبها الآن
+    if (!v) {
+        suggestLumen();
+        v = suggestBox.dataset.value;
     }
-    #summary p { margin:6px 0; color:#ff8c00; font-size:15px; }
-    .after-summary { margin-top:15px; }
-    @media (max-width:767px) {
-      input, select { font-size:15px; }
-      .btn { font-size:15px; min-width:100px; }
+
+    if (v) {
+        document.getElementById("spotLumen").value = v;
+        checkLumen(); // علشان يظهر التحذير أو يختفي حسب القيمة
     }
-  </style>
-</head>
-<body>
-  <h1>حاسبة ومخطط السبوت لايت</h1>
+}
 
-  <div class="form-section">
-    <label>الطول (متر)</label>
-    <input id="length" type="number" step="0.1" placeholder="مثال: 8">
-    <label>العرض (متر)</label>
-    <input id="width" type="number" step="0.1" placeholder="مثال: 6">
-    <label>الارتفاع (متر)</label>
-    <input id="height" type="number" step="0.1" placeholder="مثال: 3">
-    <label>اختر نوع المكان</label>
-    <select id="roomType">
-      <option value="150">غرفة نوم (150 لوكس)</option>
-      <option value="200">صالة/غرفة معيشة (200 لوكس)</option>
-      <option value="300">مكتب/مطبخ (300 لوكس)</option>
-      <option value="500">حمام/منطقة عمل دقيقة (500 لوكس)</option>
-    </select>
-    <div>
-      <button class="btn" onclick="calc()">احسب ووزّع</button>
-      <button class="btn" onclick="resetPlan()">مسح وإعادة البدء</button>
-    </div>
-  </div>
+/* ---------------------------
+   2) التحقق من الحد الأدنى للّومن
+----------------------------*/
+function checkLumen() {
+    let val = parseFloat(document.getElementById("spotLumen").value);
+    let warn = document.getElementById("warning");
 
-  <div id="result"></div>
-  <div id="planWrapper">
-    <div id="roomWrapper"><div id="room"></div></div>
-    <div id="summary"></div>
-  </div>
-  <div class="after-summary">
-    <button class="btn" onclick="downloadPlan()">حفظ المخطط مع الملخص كصورة</button>
-    <button class="btn" onclick="sharePlan()">مشاركة المخطط</button>
-    <button class="btn" onclick="window.print()">طباعة</button>
-  </div>
+    if (val < 80) {
+        warn.style.display = "block";
+        warn.textContent = "أقل لومن عملي للسبوت هو 80 لومن";
+    } else if (val < 150) {
+        warn.style.display = "block";
+        warn.textContent = "اللومن منخفض جدًا وقد يعطي إضاءة ضعيفة";
+    } else {
+        warn.style.display = "none";
+    }
+}
+/* ---------------------------
+   3) الحسابات الرئيسية
+----------------------------*/
+function calculate() {
+    let length = parseFloat(document.getElementById("length").value);
+    let width = parseFloat(document.getElementById("width").value);
+    let height = parseFloat(document.getElementById("height").value) || null;
+    let lux = parseFloat(document.getElementById("roomType").value);
+    let spotLumen = parseFloat(document.getElementById("spotLumen").value);
+    let marginInput = parseFloat(document.getElementById("margin").value);
+    let distributionType = document.getElementById("distributionType").value;
+    let spotShape = document.getElementById("spotShape").value;
+    let beamAngle = parseFloat(document.getElementById("beamAngle").value) || null;
 
-  <script>
-    const SCALE = 60; // تكبير المخطط
-    const SPOT_DIAMETER = 20;
-    const SPOT_RADIUS = SPOT_DIAMETER / 2;
-
-    function calc() {
-      const width = parseFloat(document.getElementById('width').value);
-      const length = parseFloat(document.getElementById('length').value);
-      const height = parseFloat(document.getElementById('height').value);
-      const lux = parseFloat(document.getElementById('roomType').value);
-      const lumensPerSpot = 800;
-
-      if (!(width > 0 && length > 0 && height > 0)) {
-        document.getElementById('result').innerText = "يرجى إدخال قيم صحيحة.";
+    if (!length || !width || !spotLumen) {
+        alert("الرجاء تعبئة الطول والعرض ولومن الكشاف");
         return;
-      }
+    }
 
-      const area = width * length;
-      const needed = area * lux;
-      const spots = Math.max(1, Math.ceil(needed / lumensPerSpot));
-      document.getElementById('result').innerText = "عدد السبوت المقترح: " + spots;
+    // ضبط المارجن
+    let minSide = Math.min(length, width);
+    let margin = marginInput || 0.5;
+    if (2 * margin >= minSide * 0.6) {
+        margin = +(minSide * 0.2).toFixed(2);
+    }
 
-      const room = document.getElementById('room');
-      room.style.width = (width * SCALE) + "px";
-      room.style.height = (length * SCALE) + "px";
-      room.innerHTML = "";
+    // حسابات الإضاءة
+    let area = length * width;
+    let totalLumen = area * lux;
+    let spotCount = Math.ceil(totalLumen / spotLumen);
+    if (spotCount < 1) spotCount = 1;
 
-      let cols = Math.ceil(Math.sqrt(spots * (width / length)));
-      let rows = Math.ceil(spots / cols);
-      while (cols * rows < spots) { if (width/cols > length/rows) cols++; else rows++; }
+    // تحذير لو العدد كبير
+    let warn = document.getElementById("warning");
+    if (spotCount > 40) {
+        warn.style.display = "block";
+        warn.textContent = "عدد السبوتات كبير جدًا، يفضّل استخدام لومن أعلى.";
+    } else {
+        warn.style.display = "none";
+    }
 
-      const spacingX = width / cols;
-      const spacingY = length / rows;
-      const lampPositions = [];
+    // توزيع السبوتات
+    let spots = [];
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const index = r * cols + c;
-          if (index < spots) {
-            const x = (c + 0.5) * (room.clientWidth / cols);
-            const y = (r + 0.5) * (room.clientHeight / rows);
-            const div = document.createElement('div');
-            div.className = "spot";
-            div.style.left = x + "px";
-            div.style.top = y + "px";
-            room.appendChild(div);
-            lampPositions.push({ x, y });
-          }
+    if (distributionType === "grid") {
+        let aspect = length / width;
+        let cols = Math.round(Math.sqrt(spotCount * aspect));
+        if (cols < 1) cols = 1;
+        let rows = Math.ceil(spotCount / cols);
+
+        if (rows > cols * 2) {
+            rows = Math.round(Math.sqrt(spotCount / aspect));
+            if (rows < 1) rows = 1;
+            cols = Math.ceil(spotCount / rows);
         }
-      }
 
-      const leftMost = lampPositions.reduce((a,b)=>a.x<b.x?a:b);
-      const topMost  = lampPositions.reduce((a,b)=>a.y<b.y?a:b);
+        let effectiveLength = Math.max(length - 2 * margin, length * 0.4);
+        let effectiveWidth = Math.max(width - 2 * margin, width * 0.4);
 
-      const wallToLampLeftM  = ((leftMost.x - SPOT_RADIUS) / SCALE).toFixed(2);
-      const wallToLampTopM   = ((topMost.y - SPOT_RADIUS) / SCALE).toFixed(2);
+        let spacingX = (cols > 1) ? effectiveLength / (cols - 1) : 0;
+        let spacingY = (rows > 1) ? effectiveWidth / (rows - 1) : 0;
 
-      // الأسهم داخل المخطط
-            drawArrowHorizontal(room, 0, leftMost.y, leftMost.x - SPOT_RADIUS, "right", wallToLampLeftM + " م");
+        let startX = (cols > 1) ? margin : length / 2;
+        let startY = (rows > 1) ? margin : width / 2;
 
-      if (cols > 1) {
-        const xMid1 = room.clientWidth / cols * 0.5;
-        const xMid2 = room.clientWidth / cols * 1.5;
-        const yMid  = room.clientHeight / 2;
-        const betweenLampsM  = ((xMid2 - SPOT_RADIUS) - (xMid1 + SPOT_RADIUS)) / SCALE;
-        drawArrowHorizontal(room, xMid1 + SPOT_RADIUS, yMid, xMid2 - SPOT_RADIUS, "right", betweenLampsM.toFixed(2) + " م");
-      }
+        let count = 0;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (count >= spotCount) break;
+                let x = startX + c * spacingX;
+                let y = startY + r * spacingY;
+                spots.push({ x, y });
+                count++;
+            }
+        }
 
-      drawArrowVertical(room, topMost.x, 0, topMost.y - SPOT_RADIUS, "down", wallToLampTopM + " م");
+        buildOutput(area, lux, totalLumen, spotLumen, spotCount, rows, cols, spacingX, spacingY, margin, height, beamAngle);
 
-      if (rows > 1) {
-        const yMid1 = room.clientHeight / rows * 0.5;
-        const yMid2 = room.clientHeight / rows * 1.5;
-        const xMid  = room.clientWidth / 2;
-        const betweenRowsM  = ((yMid2 - SPOT_RADIUS) - (yMid1 + SPOT_RADIUS)) / SCALE;
-        drawArrowVertical(room, xMid, yMid1 + SPOT_RADIUS, yMid2 - SPOT_RADIUS, "down", betweenRowsM.toFixed(2) + " م");
-      }
+    } else if (distributionType === "linearLength") {
+        let cols = spotCount;
+        let rows = 1;
 
-      // كتابة الطول والعرض على المخطط
-      const dimWidth = document.createElement('div');
-      dimWidth.className = "dimension";
-      dimWidth.style.top = (room.clientHeight + 6) + "px";
-      dimWidth.style.left = (room.clientWidth/2 - 20) + "px";
-      dimWidth.innerText = width + " م";
-      room.appendChild(dimWidth);
+        let effectiveLength = Math.max(length - 2 * margin, length * 0.4);
+        let spacingX = (cols > 1) ? effectiveLength / (cols - 1) : 0;
+        let startX = (cols > 1) ? margin : length / 2;
+        let y = width / 2;
 
-      const dimLength = document.createElement('div');
-      dimLength.className = "dimension";
-      dimLength.style.left = (room.clientWidth + 6) + "px";
-      dimLength.style.top = (room.clientHeight/2 - 10) + "px";
-      dimLength.innerText = length + " م";
-      room.appendChild(dimLength);
+        for (let c = 0; c < cols; c++) {
+            let x = startX + c * spacingX;
+            spots.push({ x, y });
+        }
 
-      // ملخص كسطور بدون نقاط
-      document.getElementById('summary').innerHTML =
-        `<div>
-           <h3>🏠 أبعاد الغرفة</h3>
-           <p>المساحة: ${area.toFixed(2)} م²</p>
-           <p>الأبعاد: ${length} م × ${width} م</p>
-         </div>
-         <div>
-           <h3>💡 الإضاءة</h3>
-           <p>عدد النقاط: ${spots} سبوت</p>
-           <p>المساحة النقطية: ${(area/spots).toFixed(2)} م² لكل سبوت</p>
-           <p>نمط التوزيع: ${cols} أعمدة × ${rows} صفوف</p>
-         </div>
-         <div>
-           <h3>📏 تفاصيل المسافات</h3>
-           <p>من الجدران: ${wallToLampLeftM} م أفقياً، ${wallToLampTopM} م رأسياً</p>
-           <p>بين الأعمدة: ${spacingX.toFixed(2)} م</p>
-           <p>بين الصفوف: ${spacingY.toFixed(2)} م</p>
-         </div>`;
+        buildOutput(area, lux, totalLumen, spotLumen, spotCount, rows, cols, spacingX, 0, margin, height, beamAngle, "توزيع خطي طولي");
+
+    } else if (distributionType === "linearWidth") {
+        let rows = spotCount;
+        let cols = 1;
+
+        let effectiveWidth = Math.max(width - 2 * margin, width * 0.4);
+        let spacingY = (rows > 1) ? effectiveWidth / (rows - 1) : 0;
+        let startY = (rows > 1) ? margin : width / 2;
+        let x = length / 2;
+
+        for (let r = 0; r < rows; r++) {
+            let y = startY + r * spacingY;
+            spots.push({ x, y });
+        }
+
+        buildOutput(area, lux, totalLumen, spotLumen, spotCount, rows, cols, 0, spacingY, margin, height, beamAngle, "توزيع خطي عرضي");
+
+    } else if (distributionType === "perimeter") {
+        let perimeter = 2 * (length + width);
+        let spacing = perimeter / spotCount;
+
+        let curr = 0;
+        for (let i = 0; i < spotCount; i++) {
+            let d = curr % perimeter;
+            let x, y;
+
+            if (d <= length) {
+                x = d;
+                y = margin;
+            } else if (d <= length + width) {
+                x = length - margin;
+                y = d - length;
+            } else if (d <= 2 * length + width) {
+                x = length - (d - (length + width));
+                y = width - margin;
+            } else {
+                x = margin;
+                y = width - (d - (2 * length + width));
+            }
+
+            curr += spacing;
+            spots.push({ x, y });
+        }
+
+        buildOutput(area, lux, totalLumen, spotLumen, spotCount, null, null, null, null, margin, height, beamAngle, "توزيع محيطي");
+
+    } else if (distributionType === "Ushape") {
+        let side = Math.floor(spotCount / 3);
+        let rem = spotCount - side * 3;
+
+        let top = side + (rem > 0 ? 1 : 0);
+        let right = side + (rem > 1 ? 1 : 0);
+        let bottom = side;
+
+        // علوي
+        let effL = Math.max(length - 2 * margin, length * 0.4);
+        let spacingTop = (top > 1) ? effL / (top - 1) : 0;
+        let startXTop = (top > 1) ? margin : length / 2;
+
+        for (let i = 0; i < top; i++) {
+            spots.push({ x: startXTop + i * spacingTop, y: margin });
+        }
+
+        // يمين
+        let effW = Math.max(width - 2 * margin, width * 0.4);
+        let spacingRight = (right > 1) ? effW / (right - 1) : 0;
+        let startYRight = (right > 1) ? margin : width / 2;
+
+        for (let i = 0; i < right; i++) {
+            spots.push({ x: length - margin, y: startYRight + i * spacingRight });
+        }
+
+        // سفلي
+        let spacingBottom = (bottom > 1) ? effL / (bottom - 1) : 0;
+        let startXBottom = (bottom > 1) ? margin : length / 2;
+
+        for (let i = 0; i < bottom; i++) {
+            spots.push({ x: startXBottom + i * spacingBottom, y: width - margin });
+        }
+
+        buildOutput(area, lux, totalLumen, spotLumen, spotCount, null, null, null, null, margin, height, beamAngle, "توزيع U");
     }
 
-    // دوال الأسهم
-    function drawArrowHorizontal(parent, x1, y, x2, dir="right", labelText="") {
-      const lengthPx = Math.abs(x2 - x1);
-      const startX = dir === "right" ? x1 : x2;
+    // عرض الإحداثيات
+    let coordsDiv = document.getElementById("coords");
+    let html = "<strong>إحداثيات السبوتات:</strong><br><br>";
+    spots.forEach((s, i) => {
+        html += `Spot ${i+1}: X=${s.x.toFixed(2)}m , Y=${s.y.toFixed(2)}m<br>`;
+    });
+    coordsDiv.innerHTML = html;
+    coordsDiv.style.display = "block";
 
-      const line = document.createElement('div');
-      line.className = "arrow-line";
-      line.style.left = startX + "px";
-      line.style.top = (y - 1) + "px";
-      line.style.width = lengthPx + "px";
-      line.style.height = "2px";
-      parent.appendChild(line);
+    lastSpots = spots;
+    lastLength = length;
+    lastWidth = width;
 
-      const head = document.createElement('div');
-      head.className = "arrow-head " + (dir === "right" ? "head-right" : "head-left");
-      head.style.left = (dir === "right" ? (startX + lengthPx) : (startX - 8)) + "px";
-      head.style.top = (y - 6) + "px";
-      parent.appendChild(head);
+    drawPlan(length, width, spots, spotShape);
+}
 
-      if (labelText) {
-        const label = document.createElement('div');
-        label.className = "arrow-label";
-        label.innerText = labelText;
-        label.style.left = (startX + lengthPx/2) + "px";
-        label.style.top = (y - 12) + "px";
-        parent.appendChild(label);
-      }
+/* ---------------------------
+   4) إخراج النتائج
+----------------------------*/
+function buildOutput(area, lux, totalLumen, spotLumen, spotCount, rows, cols, spacingX, spacingY, margin, height, beamAngle, extra) {
+    let out = document.getElementById("output");
+
+    let beamText = "";
+    if (height && beamAngle) {
+        let rad = beamAngle * Math.PI / 180;
+        let radius = height * Math.tan(rad / 2);
+        let diameter = radius * 2;
+        beamText = `قطر تغطية الضوء على الأرض: ${diameter.toFixed(2)} م<br>`;
     }
 
-    function drawArrowVertical(parent, x, y1, y2, dir="down", labelText="") {
-      const lengthPx = Math.abs(y2 - y1);
-      const startY = dir === "down" ? y1 : y2;
-
-      const line = document.createElement('div');
-      line.className = "arrow-line";
-      line.style.left = (x - 1) + "px";
-      line.style.top = startY + "px";
-      line.style.width = "2px";
-      line.style.height = lengthPx + "px";
-      parent.appendChild(line);
-
-      const head = document.createElement('div');
-      head.className = "arrow-head " + (dir === "down" ? "head-down" : "head-up");
-      head.style.left = (x - 8) + "px";
-      head.style.top = (dir === "down" ? (startY + lengthPx) : (startY - 8)) + "px";
-      parent.appendChild(head);
-
-      if (labelText) {
-        const label = document.createElement('div');
-        label.className = "arrow-label";
-        label.innerText = labelText;
-        label.style.left = (x - 18) + "px";
-        label.style.top = (startY + lengthPx/2) + "px";
-        parent.appendChild(label);
-      }
+    let layout = "";
+    if (rows && cols) {
+        layout = `
+        الصفوف: ${rows}<br>
+        الأعمدة: ${cols}<br>
+        مسافة الطول: ${spacingX.toFixed(2)} م<br>
+        مسافة العرض: ${spacingY.toFixed(2)} م<br>`;
+    } else if (extra) {
+        layout = `نوع التوزيع: ${extra}<br>`;
     }
 
-    // حفظ المخطط مع الملخص كصورة
-    function downloadPlan() {
-      html2canvas(document.getElementById("planWrapper")).then(canvas => {
-        const link = document.createElement("a");
-        link.download = "spotlight-plan.png";
-        link.href = canvas.toDataURL();
-        link.click();
-      });
+    out.innerHTML = `
+        <strong>نتيجة الحسبة:</strong><br><br>
+        مساحة الغرفة: ${area.toFixed(2)} م²<br>
+        اللوكس: ${lux}<br>
+        إجمالي اللومن المطلوب: ${totalLumen.toFixed(0)}<br>
+        لومن الكشاف: ${spotLumen}<br>
+        <strong>عدد السبوتات: ${spotCount}</strong><br><br>
+        ${layout}
+        المسافة من الجدار: ${margin} م<br><br>
+        ${beamText}
+    `;
+    out.style.display = "block";
+}
+
+/* ---------------------------
+   5) رسم المخطط
+----------------------------*/
+function drawPlan(length, width, spots, shape) {
+    let canvas = document.getElementById("planCanvas");
+    let ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let marginPx = 50;
+    let usableW = canvas.width - marginPx * 2;
+    let usableH = canvas.height - marginPx * 2;
+
+    let scaleX = usableW / length;
+    let scaleY = usableH / width;
+    let scale = Math.min(scaleX, scaleY);
+
+    let roomW = length * scale;
+    let roomH = width * scale;
+
+    let offsetX = (canvas.width - roomW) / 2;
+    let offsetY = (canvas.height - roomH) / 2;
+
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(offsetX, offsetY, roomW, roomH);
+
+    // سهم الشمال
+    drawNorthArrow(ctx, canvas.width - 70, offsetY + 20);
+
+    // رسم السبوتات
+    spots.forEach(s => {
+        let px = offsetX + s.x * scale;
+        let py = offsetY + s.y * scale;
+
+        let glow = ctx.createRadialGradient(px, py, 2, px, py, 18);
+        glow.addColorStop(0, "rgba(0,120,255,0.5)");
+        glow.addColorStop(1, "rgba(0,120,255,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(px, py, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#0078ff";
+        ctx.strokeStyle = "#0050aa";
+
+        if (shape === "square") {
+            ctx.beginPath();
+            ctx.rect(px - 5, py - 5, 10, 10);
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.arc(px, py, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+    });
+}
+
+function drawNorthArrow(ctx, x, y) {
+    ctx.save();
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y + 15);
+    ctx.lineTo(x, y - 10);
+    ctx.lineTo(x - 5, y - 3);
+    ctx.moveTo(x, y - 10);
+    ctx.lineTo(x + 5, y - 3);
+    ctx.stroke();
+
+    ctx.font = "11px Tahoma";
+    ctx.fillText("شمال", x, y + 28);
+
+    ctx.restore();
+}
+
+/* ---------------------------
+   6) الطباعة والتحميل
+----------------------------*/
+function printPage() {
+    window.print();
+}
+
+function downloadCoords() {
+    if (!lastSpots.length) {
+        alert("لا توجد بيانات");
+        return;
     }
 
-    // مشاركة الخطة
-    function sharePlan() {
-      const summary = document.getElementById("summary").innerText;
-      if (navigator.share) {
-        navigator.share({
-          title: "مخطط توزيع السبوت لايت",
-          text: summary,
-          url: window.location.href
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.href);
-        alert("تم نسخ رابط الخطة:\n" + window.location.href);
-      }
-    }
+    let lines = ["إحداثيات السبوتات:\n"];
+    lastSpots.forEach((s, i) => {
+        lines.push(`Spot ${i+1}: X=${s.x.toFixed(2)} , Y=${s.y.toFixed(2)}`);
+    });
 
-    // مسح وإعادة البدء
-    function resetPlan() {
-      document.getElementById('width').value = "";
-      document.getElementById('length').value = "";
-      document.getElementById('height').value = "";
-      document.getElementById('roomType').selectedIndex = 0;
-      document.getElementById('result').innerText = "";
-      document.getElementById('room').innerHTML = "";
-      document.getElementById('room').style.width = "0px";
-      document.getElementById('room').style.height = "0px";
-      document.getElementById('summary').innerHTML = "";
-    }
-  </script>
+    let blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    let url = URL.createObjectURL(blob);
 
-  <!-- مكتبة html2canvas لتحويل المخطط لصورة -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "spot_coords.txt";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+</script>
+
 </body>
 </html>
-
